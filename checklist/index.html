@@ -137,7 +137,7 @@ let filterMode = "all";
 let team = "";
 let CH = {bars:null, plat:null};
 
-function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&","<":"<",">":">",'"':""","'":"&#39;"}[c])); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"\u0026amp;","<":"\u0026lt;",">":"\u0026gt;",'"':"\u0026quot;","'":"\u0026#39;"}[c])); }
 function nowMSK(){
   const parts = new Intl.DateTimeFormat("ru-RU", {timeZone:"Europe/Moscow", day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit", hour12:false}).formatToParts(new Date());
   const g = k => (parts.find(p=>p.type===k)||{}).value;
@@ -363,6 +363,8 @@ document.getElementById("reset").addEventListener("click", ()=>{
 document.getElementById("refresh").addEventListener("click", ()=> boot());
 
 boot();
+
+window.addEventListener("mensorry-unlocked", function(){ try{ if(DATA) render(); }catch(e){} });
 </script>
 </body>
 </html>

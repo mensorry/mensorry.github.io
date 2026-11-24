@@ -18,6 +18,10 @@
     if (ov) ov.remove();
     var st = document.getElementById(STYLE_ID);
     if (st) st.remove();
+    try {
+      window.dispatchEvent(new Event('resize'));
+      window.dispatchEvent(new CustomEvent('mensorry-unlocked'));
+    } catch (e4) {}
   }
 
   function injectStyle() {
