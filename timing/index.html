@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<script src="/auth.js"></script>
+<meta name="robots" content="noindex,nofollow">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MENSORRY · тайминги</title>
@@ -109,7 +111,7 @@
 
   <div class="grid row2">
     <div class="card">
-      <div class="ttl"><h3>Опоздания по командам</h3><span>сдвиги &gt;5 мин</span></div>
+      <div class="ttl"><h3>Опоздания по командам</h3><span>сдвиги >5 мин</span></div>
       <div class="chartbox"><canvas id="cBars"></canvas></div>
       <div class="empty" id="barsEmpty" style="display:none">Нет данных по фильтру</div>
     </div>
@@ -141,7 +143,7 @@ let period = "week";
 let team = "";
 let CH = {bars:null, dur:null};
 
-function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&","<":"<",">":">",'"':""","'":"&#39;"}[c])); }
 function fmtMin(m){
   if(m===null||m===undefined) return "—";
   const sign = m<0?"−":"";
