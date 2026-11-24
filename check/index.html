@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script src="/auth.js"></script>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MENSORRY · средний чек</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+  :root{--bg:#0a0a0b;--card:#131316;--line:#232327;--txt:#e4e4e7;--num:#fafafa;--mut:#71717a;--acc:#8b5cf6;--acc2:#a78bfa}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .box{width:min(460px,92vw);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:32px 28px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6);text-align:center}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 12px var(--acc);margin-right:8px;vertical-align:middle}
+  h1{margin:0 0 8px;font-size:24px;font-weight:700;color:var(--num);letter-spacing:-.02em}
+  p{margin:0 0 22px;color:var(--mut);font-size:14px;line-height:1.5}
+  a.btn,button.btn{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;border:0;border-radius:10px;padding:12px 18px;font:600 15px Inter,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(139,92,246,.35)}
+  a.btn:hover,button.btn:hover{background:#7c3aed}
+
+</style>
+</head>
+<body>
+<div class="box">
+  <h1><span class="dot"></span>MENSORRY · средний чек</h1>
+  <p>Дашборд среднего чека по таблице «Средний чек майн». После пароля откроется веб-приложение Google — может понадобиться вход в Google-аккаунт.</p>
+  <a class="btn" id="open" href="https://script.google.com/macros/s/AKfycbyXM1Rfk0Z4IyFVWabnoy7JGulk-1RJdeOFp1u3y25kfWaDJWaXVY7jPRb-EUPjrYsw8A/exec">Открыть дашборд</a>
+</div>
+<script>
+(function(){
+  var target = 'https://script.google.com/macros/s/AKfycbyXM1Rfk0Z4IyFVWabnoy7JGulk-1RJdeOFp1u3y25kfWaDJWaXVY7jPRb-EUPjrYsw8A/exec';
+  var going = false;
+  function go(){
+    if (going) return;
+    going = true;
+    location.href = target;
+  }
+  function ready(){
+    return !document.documentElement.classList.contains("mensorry-locked")
+      && !document.getElementById("mensorry-auth-overlay");
+  }
+  function arm(){
+    if (ready()) setTimeout(go, 600);
+  }
+  window.addEventListener("mensorry-unlocked", arm);
+  document.getElementById("open").addEventListener("click", function(e){
+    e.preventDefault();
+    go();
+  });
+  setInterval(function(){ if (ready()) arm(); }, 400);
+})();
+</script>
+</body>
+</html>
