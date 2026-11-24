@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<script src="/auth.js"></script>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MENSORRY · чек-лист</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0a0b; --card:#131316; --card2:#18181c; --line:#232327; --txt:#e4e4e7; --num:#fafafa; --mut:#71717a;
+    --acc:#8b5cf6; --acc2:#a78bfa; --green:#22c55e; --red:#ef4444;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  body{padding:24px}
+  .wrap{max-width:1400px;margin:0 auto}
+  .num{font-variant-numeric:tabular-nums}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  h1{margin:0;font-size:24px;font-weight:700;color:var(--num);letter-spacing:-.02em}
+  .sub{color:var(--mut);font-size:13px;margin-top:4px}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 12px var(--acc);margin-right:8px;vertical-align:middle}
+  .filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:20px}
+  .chips{display:flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px;gap:2px}
+  .chip{border:0;background:transparent;color:var(--mut);font:600 13px Inter,sans-serif;padding:8px 16px;border-radius:999px;cursor:pointer;transition:.15s}
+  .chip:hover{color:var(--txt)}
+  .chip.on{background:var(--acc);color:#fff;box-shadow:0 4px 14px rgba(139,92,246,.35)}
+  .sel{position:relative}
+  .sel select{appearance:none;-webkit-appearance:none;background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:999px;
+    font:500 13px Inter,sans-serif;padding:10px 38px 10px 16px;cursor:pointer;min-width:180px;max-width:360px;outline:none;transition:.15s}
+  .sel select:hover,.sel select:focus{border-color:#3f3f46}
+  .sel::after{content:"";position:absolute;right:16px;top:50%;width:7px;height:7px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+  .sel select option{background:#18181c;color:var(--txt)}
+  .reset{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:999px;padding:10px 16px;font:500 13px Inter,sans-serif;cursor:pointer}
+  .reset:hover{color:var(--txt);border-color:#3f3f46}
+  .hbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6)}
+  .grid{display:grid;gap:16px}
+  .kpis{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:16px}
+  .kpi .lbl{color:var(--mut);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:8px}
+  .kpi .ico{width:28px;height:28px;border-radius:9px;display:inline-grid;place-items:center;background:rgba(139,92,246,.14);color:var(--acc2);font-size:14px}
+  .kpi .val{color:var(--num);font-size:34px;font-weight:800;letter-spacing:-.03em;margin:14px 0 6px;line-height:1.05;white-space:nowrap}
+  .kpi .hint{color:var(--mut);font-size:12px}
+  .note{color:var(--mut);font-size:13px;margin:0 0 16px;line-height:1.45}
+  .callout{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:12px 16px;font-size:13px;color:var(--txt);margin-bottom:16px;line-height:1.45}
+  .callout b{color:var(--acc2)}
+  .row2{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);margin-bottom:16px}
+  .ttl{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+  .ttl h3{margin:0;font-size:15px;font-weight:600;color:var(--num)}
+  .ttl span{color:var(--mut);font-size:12px}
+  .chartbox{position:relative;height:300px}
+  .empty{color:var(--mut);text-align:center;padding:40px 0;font-size:14px}
+  .foot{color:var(--mut);font-size:12px;margin-top:18px;text-align:center}
+  .teams{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:16px}
+  .tcard .name{color:var(--num);font-size:15px;font-weight:600;letter-spacing:-.01em}
+  .tcard .stat{color:var(--mut);font-size:12px;margin-top:4px}
+  .tcard .pct{color:var(--num);font-size:28px;font-weight:800;letter-spacing:-.03em;margin:10px 0 8px;line-height:1}
+  .bar{height:10px;background:#1a1a1f;border-radius:999px;overflow:hidden}
+  .bar>i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#7c3aed,#a78bfa);box-shadow:0 0 12px rgba(139,92,246,.4);transition:width .8s cubic-bezier(.2,.7,.2,1)}
+  .plats{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .plat{background:var(--card2);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--txt)}
+  .plat.ok{color:var(--green);background:rgba(34,197,94,.12)}
+  .plat.mid{color:var(--acc2);background:rgba(139,92,246,.12)}
+  .plat.bad{color:#f87171;background:rgba(239,68,68,.10)}
+  .miss{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  .miss summary{cursor:pointer;color:var(--mut);font-size:12px;font-weight:600;list-style:none}
+  .miss summary::-webkit-details-marker{display:none}
+  .miss summary:hover{color:var(--txt)}
+  .miss ul{margin:8px 0 0;padding:0;list-style:none;max-height:220px;overflow:auto}
+  .miss li{font-size:12px;color:var(--txt);padding:6px 0;border-bottom:1px solid #1d1d22}
+  .miss li span{color:var(--mut);margin-right:6px}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+  .pill.ok{color:var(--green);background:rgba(34,197,94,.12)}
+  @media (max-width:1100px){.kpis,.teams{grid-template-columns:repeat(2,minmax(0,1fr))}.row2{grid-template-columns:1fr}}
+  @media (max-width:560px){body{padding:14px}.kpis,.teams{grid-template-columns:1fr}.kpi .val,.tcard .pct{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span class="dot"></span>MENSORRY · чек-лист</h1>
+      <div class="sub" id="sub">Заполнение профилей по 9 командам</div>
+    </div>
+    <div class="hbtns">
+      <button class="reset" id="refresh" type="button">⟳ Обновить</button>
+    </div>
+  </header>
+
+  <div class="callout" id="callout"></div>
+
+  <div class="filters">
+    <div class="chips" id="chips">
+      <button class="chip on" data-f="all" type="button">Все</button>
+      <button class="chip" data-f="gaps" type="button">Есть пробелы</button>
+      <button class="chip" data-f="done" type="button">Заполнено</button>
+    </div>
+    <div class="sel"><select id="fTeam"></select></div>
+    <button class="reset" id="reset" type="button">Сбросить</button>
+  </div>
+  <p class="note" id="periodNote"></p>
+
+  <div class="grid kpis">
+    <div class="card kpi"><div class="lbl"><span class="ico">✓</span>Заполнено</div><div class="val num" id="kFilled">—</div><div class="hint" id="hFilled">пунктов со статусом ≠ ❌</div></div>
+    <div class="card kpi"><div class="lbl"><span class="ico">☰</span>Всего пунктов</div><div class="val num" id="kTotal">—</div><div class="hint" id="hTotal">по выбранным командам</div></div>
+    <div class="card kpi"><div class="lbl"><span class="ico">◎</span>По студии</div><div class="val num" id="kPct">—</div><div class="hint">заполнено / всего</div></div>
+    <div class="card kpi"><div class="lbl"><span class="ico">⚑</span>Незаполненных</div><div class="val num" id="kMiss">—</div><div class="hint" id="hMiss">пунктов со статусом ❌</div></div>
+  </div>
+
+  <div class="grid row2">
+    <div class="card">
+      <div class="ttl"><h3>Заполнение по командам</h3><span>%</span></div>
+      <div class="chartbox"><canvas id="cBars"></canvas></div>
+      <div class="empty" id="barsEmpty" style="display:none">Нет данных по фильтру</div>
+    </div>
+    <div class="card">
+      <div class="ttl"><h3>Заполнение по площадкам</h3><span>сумма по командам</span></div>
+      <div class="chartbox"><canvas id="cPlat"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid teams" id="teams"></div>
+
+  <p class="foot" id="foot">Данные из «Чек-Лист» · заполнено всё, кроме статуса ❌</p>
+</div>
+
+<script>
+const SHEET_ID = "1L06LbE2SiOCXlUNsx-_jK8JI5fKaJrCLt2W4JpP_MrY";
+const TEAM_GIDS = {"Карабанова-Лебеденко/Гончаров": 1000055024, "Кирилина/Вахитов": 1856771280, "Коновалова-Емельянникова/Алиханов": 1920204878, "Луткова/Лутков": 303240981, "Мануковская/Рыжов": 1232610376, "Ратынская/Рыжов": 1939103003, "Ткаченко/Лютов": 1912716300, "Чеботарева/Соло": 1495551026, "Чернорубашкина/Миненко": 1840515434};
+const SNAPSHOT = {"meta":{"asOf":"25.11.2026 02:28 МСК","source":"Чек-Лист","spreadsheetId":"1L06LbE2SiOCXlUNsx-_jK8JI5fKaJrCLt2W4JpP_MrY","live":true},"studio":{"filled":74,"total":675,"pct":11},"teams":[{"name":"Карабанова-Лебеденко/Гончаров","gid":1000055024,"filled":17,"total":75,"pct":23,"platforms":[{"name":"Жасмин","filled":0,"total":12},{"name":"Стрипчат","filled":17,"total":19},{"name":"Чатурбейт","filled":0,"total":13},{"name":"Флирт4Фри","filled":0,"total":5},{"name":"Кам4","filled":0,"total":5},{"name":"Камсода","filled":0,"total":5},{"name":"Майклаб","filled":0,"total":5},{"name":"XLOVE","filled":0,"total":11}],"missing":[{"platform":"Жасмин","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Готовность к действиям","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Сообщения","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Запросы на действия (тип меню)","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"Заметки","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Мобильный тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"ПК тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Тизеры Видео Звонков","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Фан клуб","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Инфо о модели","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Соц. сети","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Код БИО","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Wish List: Lovense, Trone","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"DMCA","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фото","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Видео","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фанка","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Tip Goal","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"CrazyTicket Bot","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"New follower message","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Rotating Notifier","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"The Menu","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Bio Information:","status":"❌"},{"platform":"Флирт4Фри","section":"Фото","task":"Фото","status":"❌"},{"platform":"Флирт4Фри","section":"Видео","task":"Promo Videos:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Game Center:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Game Center:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"PVT:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Тип меню:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Голы:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Соц. сети:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Твин (ИИ помощник)","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Запросы на действие:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Видео звонки:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Подписка:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Контент:","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"ЛИЧНОЕ ПРОСТРАНСТВО","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"html","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"Приветственное сообщение","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Фото","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Видео","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Кол-во Vip контента","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (подарки)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (действия)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (вибрации)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Rооm Goal","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Camrank","status":"❌"}]},{"name":"Кирилина/Вахитов","gid":1856771280,"filled":57,"total":75,"pct":76,"platforms":[{"name":"Жасмин","filled":5,"total":12},{"name":"Стрипчат","filled":18,"total":19},{"name":"Чатурбейт","filled":10,"total":13},{"name":"Флирт4Фри","filled":5,"total":5},{"name":"Кам4","filled":5,"total":5},{"name":"Камсода","filled":0,"total":5},{"name":"Майклаб","filled":4,"total":5},{"name":"XLOVE","filled":10,"total":11}],"missing":[{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Видео","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Мобильный тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"ПК тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Тизеры Видео Звонков","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Колеса: Легкое, Контроль, БДСМ","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"DMCA","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"CrazyTicket Bot","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Rotating Notifier","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Тип меню:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Голы:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Соц. сети:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Видео звонки:","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Camrank","status":"❌"}]},{"name":"Коновалова-Емельянникова/Алиханов","gid":1920204878,"filled":0,"total":75,"pct":0,"platforms":[{"name":"Жасмин","filled":0,"total":12},{"name":"Стрипчат","filled":0,"total":19},{"name":"Чатурбейт","filled":0,"total":13},{"name":"Флирт4Фри","filled":0,"total":5},{"name":"Кам4","filled":0,"total":5},{"name":"Камсода","filled":0,"total":5},{"name":"Майклаб","filled":0,"total":5},{"name":"XLOVE","filled":0,"total":11}],"missing":[{"platform":"Жасмин","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Готовность к действиям","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Сообщения","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Запросы на действия (тип меню)","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"Заметки","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Мобильный тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"ПК тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Тизеры Видео Звонков","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Обложка","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Панели","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Расписание","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Интересы","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Тип меню","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Расширения: Боты настроены","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Голы","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Особенности шоу","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Превью","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Подробности шоу (#тег)","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Колеса: Легкое, Контроль, БДСМ","status":"❌"},{"platform":"Стрипчат","section":"Фанка","task":"Фан клуб","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Инфо о модели","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Соц. сети","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Код БИО","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Wish List: Lovense, Trone","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"DMCA","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фото","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Видео","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фанка","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Tip Goal","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"CrazyTicket Bot","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"New follower message","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Rotating Notifier","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"The Menu","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Bio Information:","status":"❌"},{"platform":"Флирт4Фри","section":"Фото","task":"Фото","status":"❌"},{"platform":"Флирт4Фри","section":"Видео","task":"Promo Videos:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Game Center:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Game Center:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"PVT:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Тип меню:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Голы:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Соц. сети:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Твин (ИИ помощник)","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Запросы на действие:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Видео звонки:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Подписка:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Контент:","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"ЛИЧНОЕ ПРОСТРАНСТВО","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"html","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"Приветственное сообщение","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Фото","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Видео","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Кол-во Vip контента","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (подарки)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (действия)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (вибрации)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Rооm Goal","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Camrank","status":"❌"}]},{"name":"Луткова/Лутков","gid":303240981,"filled":0,"total":75,"pct":0,"platforms":[{"name":"Жасмин","filled":0,"total":12},{"name":"Стрипчат","filled":0,"total":19},{"name":"Чатурбейт","filled":0,"total":13},{"name":"Флирт4Фри","filled":0,"total":5},{"name":"Кам4","filled":0,"total":5},{"name":"Камсода","filled":0,"total":5},{"name":"Майклаб","filled":0,"total":5},{"name":"XLOVE","filled":0,"total":11}],"missing":[{"platform":"Жасмин","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Готовность к действиям","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Сообщения","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Запросы на действия (тип меню)","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"Заметки","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Мобильный тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"ПК тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Тизеры Видео Звонков","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Обложка","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Панели","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Расписание","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Интересы","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Тип меню","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Расширения: Боты настроены","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Голы","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Особенности шоу","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Превью","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Подробности шоу (#тег)","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Колеса: Легкое, Контроль, БДСМ","status":"❌"},{"platform":"Стрипчат","section":"Фанка","task":"Фан клуб","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Инфо о модели","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Соц. сети","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Код БИО","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Wish List: Lovense, Trone","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"DMCA","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фото","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Видео","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фанка","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Tip Goal","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"CrazyTicket Bot","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"New follower message","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Rotating Notifier","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"The Menu","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Bio Information:","status":"❌"},{"platform":"Флирт4Фри","section":"Фото","task":"Фото","status":"❌"},{"platform":"Флирт4Фри","section":"Видео","task":"Promo Videos:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Game Center:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Game Center:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"PVT:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Тип меню:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Голы:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Соц. сети:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Твин (ИИ помощник)","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Запросы на действие:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Видео звонки:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Подписка:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Контент:","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"ЛИЧНОЕ ПРОСТРАНСТВО","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"html","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"Приветственное сообщение","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Фото","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Видео","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Кол-во Vip контента","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (подарки)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (действия)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (вибрации)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Rооm Goal","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Camrank","status":"❌"}]},{"name":"Мануковская/Рыжов","gid":1232610376,"filled":0,"total":75,"pct":0,"platforms":[{"name":"Жасмин","filled":0,"total":12},{"name":"Стрипчат","filled":0,"total":19},{"name":"Чатурбейт","filled":0,"total":13},{"name":"Флирт4Фри","filled":0,"total":5},{"name":"Кам4","filled":0,"total":5},{"name":"Камсода","filled":0,"total":5},{"name":"Майклаб","filled":0,"total":5},{"name":"XLOVE","filled":0,"total":11}],"missing":[{"platform":"Жасмин","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Готовность к действиям","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Сообщения","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Запросы на действия (тип меню)","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"Заметки","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Мобильный тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"ПК тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Тизеры Видео Звонков","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Обложка","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Панели","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Расписание","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Интересы","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Тип меню","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Расширения: Боты настроены","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Голы","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Особенности шоу","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Превью","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Подробности шоу (#тег)","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Колеса: Легкое, Контроль, БДСМ","status":"❌"},{"platform":"Стрипчат","section":"Фанка","task":"Фан клуб","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Инфо о модели","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Соц. сети","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Код БИО","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Wish List: Lovense, Trone","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"DMCA","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фото","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Видео","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фанка","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Tip Goal","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"CrazyTicket Bot","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"New follower message","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Rotating Notifier","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"The Menu","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Bio Information:","status":"❌"},{"platform":"Флирт4Фри","section":"Фото","task":"Фото","status":"❌"},{"platform":"Флирт4Фри","section":"Видео","task":"Promo Videos:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Game Center:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Game Center:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"PVT:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Тип меню:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Голы:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Соц. сети:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Твин (ИИ помощник)","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Запросы на действие:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Видео звонки:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Подписка:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Контент:","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"ЛИЧНОЕ ПРОСТРАНСТВО","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"html","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"Приветственное сообщение","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Фото","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Видео","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Кол-во Vip контента","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (подарки)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (действия)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (вибрации)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Rооm Goal","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Camrank","status":"❌"}]},{"name":"Ратынская/Рыжов","gid":1939103003,"filled":0,"total":75,"pct":0,"platforms":[{"name":"Жасмин","filled":0,"total":12},{"name":"Стрипчат","filled":0,"total":19},{"name":"Чатурбейт","filled":0,"total":13},{"name":"Флирт4Фри","filled":0,"total":5},{"name":"Кам4","filled":0,"total":5},{"name":"Камсода","filled":0,"total":5},{"name":"Майклаб","filled":0,"total":5},{"name":"XLOVE","filled":0,"total":11}],"missing":[{"platform":"Жасмин","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Готовность к действиям","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Сообщения","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Запросы на действия (тип меню)","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"Заметки","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Мобильный тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"ПК тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Тизеры Видео Звонков","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Обложка","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Панели","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Расписание","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Интересы","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Тип меню","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Расширения: Боты настроены","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Голы","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Особенности шоу","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Превью","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Подробности шоу (#тег)","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Колеса: Легкое, Контроль, БДСМ","status":"❌"},{"platform":"Стрипчат","section":"Фанка","task":"Фан клуб","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Инфо о модели","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Соц. сети","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Код БИО","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Wish List: Lovense, Trone","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"DMCA","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фото","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Видео","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фанка","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Tip Goal","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"CrazyTicket Bot","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"New follower message","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Rotating Notifier","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"The Menu","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Bio Information:","status":"❌"},{"platform":"Флирт4Фри","section":"Фото","task":"Фото","status":"❌"},{"platform":"Флирт4Фри","section":"Видео","task":"Promo Videos:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Game Center:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Game Center:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"PVT:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Тип меню:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Голы:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Соц. сети:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Твин (ИИ помощник)","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Запросы на действие:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Видео звонки:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Подписка:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Контент:","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"ЛИЧНОЕ ПРОСТРАНСТВО","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"html","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"Приветственное сообщение","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Фото","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Видео","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Кол-во Vip контента","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (подарки)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (действия)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (вибрации)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Rооm Goal","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Camrank","status":"❌"}]},{"name":"Ткаченко/Лютов","gid":1912716300,"filled":0,"total":75,"pct":0,"platforms":[{"name":"Жасмин","filled":0,"total":12},{"name":"Стрипчат","filled":0,"total":19},{"name":"Чатурбейт","filled":0,"total":13},{"name":"Флирт4Фри","filled":0,"total":5},{"name":"Кам4","filled":0,"total":5},{"name":"Камсода","filled":0,"total":5},{"name":"Майклаб","filled":0,"total":5},{"name":"XLOVE","filled":0,"total":11}],"missing":[{"platform":"Жасмин","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Готовность к действиям","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Сообщения","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Запросы на действия (тип меню)","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"Заметки","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Мобильный тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"ПК тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Тизеры Видео Звонков","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Обложка","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Панели","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Расписание","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Интересы","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Тип меню","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Расширения: Боты настроены","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Голы","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Особенности шоу","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Превью","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Подробности шоу (#тег)","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Колеса: Легкое, Контроль, БДСМ","status":"❌"},{"platform":"Стрипчат","section":"Фанка","task":"Фан клуб","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Инфо о модели","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Соц. сети","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Код БИО","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Wish List: Lovense, Trone","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"DMCA","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фото","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Видео","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фанка","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Tip Goal","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"CrazyTicket Bot","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"New follower message","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Rotating Notifier","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"The Menu","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Bio Information:","status":"❌"},{"platform":"Флирт4Фри","section":"Фото","task":"Фото","status":"❌"},{"platform":"Флирт4Фри","section":"Видео","task":"Promo Videos:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Game Center:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Game Center:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"PVT:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Тип меню:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Голы:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Соц. сети:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Твин (ИИ помощник)","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Запросы на действие:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Видео звонки:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Подписка:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Контент:","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"ЛИЧНОЕ ПРОСТРАНСТВО","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"html","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"Приветственное сообщение","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Фото","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Видео","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Кол-во Vip контента","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (подарки)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (действия)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (вибрации)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Rооm Goal","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Camrank","status":"❌"}]},{"name":"Чеботарева/Соло","gid":1495551026,"filled":0,"total":75,"pct":0,"platforms":[{"name":"Жасмин","filled":0,"total":12},{"name":"Стрипчат","filled":0,"total":19},{"name":"Чатурбейт","filled":0,"total":13},{"name":"Флирт4Фри","filled":0,"total":5},{"name":"Кам4","filled":0,"total":5},{"name":"Камсода","filled":0,"total":5},{"name":"Майклаб","filled":0,"total":5},{"name":"XLOVE","filled":0,"total":11}],"missing":[{"platform":"Жасмин","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Готовность к действиям","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Сообщения","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Запросы на действия (тип меню)","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"Заметки","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Мобильный тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"ПК тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Тизеры Видео Звонков","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Обложка","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Панели","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Расписание","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Интересы","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Тип меню","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Расширения: Боты настроены","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Голы","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Особенности шоу","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Превью","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Подробности шоу (#тег)","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Колеса: Легкое, Контроль, БДСМ","status":"❌"},{"platform":"Стрипчат","section":"Фанка","task":"Фан клуб","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Инфо о модели","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Соц. сети","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Код БИО","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Wish List: Lovense, Trone","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"DMCA","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фото","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Видео","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фанка","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Tip Goal","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"CrazyTicket Bot","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"New follower message","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Rotating Notifier","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"The Menu","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Bio Information:","status":"❌"},{"platform":"Флирт4Фри","section":"Фото","task":"Фото","status":"❌"},{"platform":"Флирт4Фри","section":"Видео","task":"Promo Videos:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Game Center:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Game Center:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"PVT:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Тип меню:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Голы:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Соц. сети:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Твин (ИИ помощник)","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Запросы на действие:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Видео звонки:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Подписка:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Контент:","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"ЛИЧНОЕ ПРОСТРАНСТВО","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"html","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"Приветственное сообщение","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Фото","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Видео","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Кол-во Vip контента","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (подарки)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (действия)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (вибрации)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Rооm Goal","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Camrank","status":"❌"}]},{"name":"Чернорубашкина/Миненко","gid":1840515434,"filled":0,"total":75,"pct":0,"platforms":[{"name":"Жасмин","filled":0,"total":12},{"name":"Стрипчат","filled":0,"total":19},{"name":"Чатурбейт","filled":0,"total":13},{"name":"Флирт4Фри","filled":0,"total":5},{"name":"Кам4","filled":0,"total":5},{"name":"Камсода","filled":0,"total":5},{"name":"Майклаб","filled":0,"total":5},{"name":"XLOVE","filled":0,"total":11}],"missing":[{"platform":"Жасмин","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Готовность к действиям","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Сообщения","status":"❌"},{"platform":"Жасмин","section":"Профиль","task":"Запросы на действия (тип меню)","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Альбомы","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Бесплатные) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"(Премиум) Видео","status":"❌"},{"platform":"Жасмин","section":"Контент","task":"Заметки","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Мобильный тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"ПК тизер","status":"❌"},{"platform":"Жасмин","section":"Тизеры","task":"Тизеры Видео Звонков","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Аватар","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Обложка","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Панели","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Расписание","status":"❌"},{"platform":"Стрипчат","section":"Профиль","task":"Интересы","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Фото","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Бесплатные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Платные","status":"❌"},{"platform":"Стрипчат","section":"Видео","task":"Фан клуб","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Тип меню","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Расширения: Боты настроены","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Голы","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Особенности шоу","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Превью","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Подробности шоу (#тег)","status":"❌"},{"platform":"Стрипчат","section":"Трансляция","task":"Колеса: Легкое, Контроль, БДСМ","status":"❌"},{"platform":"Стрипчат","section":"Фанка","task":"Фан клуб","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Инфо о модели","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Соц. сети","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Код БИО","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"Wish List: Lovense, Trone","status":"❌"},{"platform":"Чатурбейт","section":"БИО","task":"DMCA","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фото","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Видео","status":"❌"},{"platform":"Чатурбейт","section":"Контент","task":"Фанка","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Tip Goal","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"CrazyTicket Bot","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"New follower message","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"Rotating Notifier","status":"❌"},{"platform":"Чатурбейт","section":"Боты","task":"The Menu","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Bio Information:","status":"❌"},{"platform":"Флирт4Фри","section":"Фото","task":"Фото","status":"❌"},{"platform":"Флирт4Фри","section":"Видео","task":"Promo Videos:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Game Center:","status":"❌"},{"platform":"Флирт4Фри","section":"Профиль","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Кам4","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Tip Menu:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"Game Center:","status":"❌"},{"platform":"Кам4","section":"Боты","task":"PVT:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Тип меню:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Голы:","status":"❌"},{"platform":"Камсода","section":"Меню","task":"Соц. сети:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Фото:","status":"❌"},{"platform":"Камсода","section":"Контент","task":"Видео:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Твин (ИИ помощник)","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Запросы на действие:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Видео звонки:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Подписка:","status":"❌"},{"platform":"Майклаб","section":"Инструменты","task":"Контент:","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"ЛИЧНОЕ ПРОСТРАНСТВО","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"html","status":"❌"},{"platform":"XLOVE","section":"Профиль","task":"Приветственное сообщение","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Фото","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Видео","status":"❌"},{"platform":"XLOVE","section":"Контент","task":"Кол-во Vip контента","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (подарки)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (действия)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Action panel (вибрации)","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Rооm Goal","status":"❌"},{"platform":"XLOVE","section":"Инструменты","task":"Camrank","status":"❌"}]}]};
+
+let DATA = SNAPSHOT;
+let filterMode = "all";
+let team = "";
+let CH = {bars:null, plat:null};
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&","<":"<",">":">",'"':""","'":"&#39;"}[c])); }
+function nowMSK(){
+  const parts = new Intl.DateTimeFormat("ru-RU", {timeZone:"Europe/Moscow", day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit", hour12:false}).formatToParts(new Date());
+  const g = k => (parts.find(p=>p.type===k)||{}).value;
+  return g("day")+"."+g("month")+"."+g("year")+" "+g("hour")+":"+g("minute")+" МСК";
+}
+function normPlat(p){
+  p = (p||"").trim();
+  if(!p) return "—";
+  const low = p.toLowerCase();
+  if(low==="икслав" || low==="xlove") return "XLOVE";
+  return p;
+}
+function parseCSV(text){
+  const rows = [];
+  let row = [], cell = "", i = 0, q = false;
+  const s = text.replace(/^\uFEFF/, "");
+  while(i < s.length){
+    const ch = s[i];
+    if(q){
+      if(ch === '"'){
+        if(s[i+1] === '"'){ cell += '"'; i += 2; continue; }
+        q = false; i++; continue;
+      }
+      cell += ch; i++; continue;
+    }
+    if(ch === '"'){ q = true; i++; continue; }
+    if(ch === ","){ row.push(cell); cell = ""; i++; continue; }
+    if(ch === "\r"){ i++; continue; }
+    if(ch === "\n"){ row.push(cell); rows.push(row); row = []; cell = ""; i++; continue; }
+    cell += ch; i++;
+  }
+  if(cell.length || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+function teamFromRows(name, gid, rows){
+  const plats = new Map();
+  const items = [];
+  for(let r = 1; r < rows.length; r++){
+    const row = rows[r] || [];
+    const plat = normPlat(row[0]), section = (row[1]||"").trim(), task = (row[2]||"").trim(), status = (row[3]||"").trim();
+    if(!task || task === "Задача") continue;
+    const filled = !!status && status !== "❌";
+    items.push({platform:plat, section, task, status, filled});
+    if(!plats.has(plat)) plats.set(plat, {filled:0, total:0});
+    const p = plats.get(plat); p.total++; if(filled) p.filled++;
+  }
+  const filled = items.filter(x=>x.filled).length;
+  const total = items.length;
+  return {
+    name, gid,
+    filled, total,
+    pct: total ? Math.round(100*filled/total) : 0,
+    platforms: [...plats.entries()].map(([n,v]) => ({name:n, filled:v.filled, total:v.total})),
+    missing: items.filter(x=>!x.filled).map(x => ({platform:x.platform, section:x.section, task:x.task, status:x.status}))
+  };
+}
+async function loadLive(){
+  const teams = [];
+  for(const [name, gid] of Object.entries(TEAM_GIDS)){
+    const url = "https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/export?format=csv&gid="+gid;
+    const res = await fetch(url, {cache:"no-store"});
+    if(!res.ok) throw new Error("csv "+res.status+" "+name);
+    const text = await res.text();
+    if(!text || text[0] === "<") throw new Error("not csv "+name);
+    teams.push(teamFromRows(name, gid, parseCSV(text)));
+  }
+  const filled = teams.reduce((a,t)=>a+t.filled,0);
+  const total = teams.reduce((a,t)=>a+t.total,0);
+  return {
+    meta: {asOf: nowMSK(), source:"Чек-Лист", live:true},
+    studio: {filled, total, pct: total?Math.round(100*filled/total):0},
+    teams
+  };
+}
+function visibleTeams(){
+  return DATA.teams.filter(t => {
+    if(team && t.name !== team) return false;
+    if(filterMode === "gaps") return t.filled < t.total;
+    if(filterMode === "done") return t.total>0 && t.filled === t.total;
+    return true;
+  });
+}
+function fillTeams(){
+  const el = document.getElementById("fTeam");
+  const cur = team;
+  el.innerHTML = '<option value="">Все команды</option>' +
+    DATA.teams.map(t => '<option value="'+esc(t.name)+'"'+(t.name===cur?" selected":"")+'>'+esc(t.name)+'</option>').join("");
+  if(cur && !DATA.teams.some(t => t.name===cur)){ team=""; el.value=""; }
+}
+function destroyChart(key){
+  if(CH[key]){ CH[key].destroy(); CH[key]=null; }
+}
+function chartOpts(extraTooltip){
+  return {
+    indexAxis:"y", responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}, tooltip:{callbacks:{
+      label: extraTooltip || (ctx => " "+(ctx.raw||0)+"%")
+    }}},
+    scales:{
+      x:{ beginAtZero:true, max:100, ticks:{color:"#71717a", font:{size:11}, callback:v=>v+"%"}, grid:{color:"#232327"}, border:{display:false} },
+      y:{ ticks:{color:"#e4e4e7", font:{size:11, family:"Inter"}}, grid:{display:false}, border:{display:false} }
+    }
+  };
+}
+function renderBars(list){
+  destroyChart("bars");
+  const empty = document.getElementById("barsEmpty");
+  const canvas = document.getElementById("cBars");
+  if(!list.length){ canvas.style.display="none"; empty.style.display="block"; return; }
+  canvas.style.display="block"; empty.style.display="none";
+  CH.bars = new Chart(canvas.getContext("2d"), {
+    type:"bar",
+    data:{ labels: list.map(t=>t.name), datasets:[{
+      data: list.map(t=>t.pct),
+      backgroundColor:"rgba(139,92,246,.75)",
+      hoverBackgroundColor:"rgba(167,139,250,.95)",
+      borderRadius:8, borderSkipped:false, maxBarThickness:28
+    }]},
+    options: chartOpts((ctx) => {
+      const t = list[ctx.dataIndex];
+      return " "+t.filled+"/"+t.total+" · "+t.pct+"%";
+    })
+  });
+}
+function renderPlat(list){
+  destroyChart("plat");
+  const acc = new Map();
+  list.forEach(t => t.platforms.forEach(p => {
+    if(!acc.has(p.name)) acc.set(p.name, {filled:0,total:0});
+    const a = acc.get(p.name); a.filled += p.filled; a.total += p.total;
+  }));
+  const rows = [...acc.entries()].map(([name,v]) => ({name, pct: v.total?Math.round(100*v.filled/v.total):0, meta:v.filled+"/"+v.total}));
+  CH.plat = new Chart(document.getElementById("cPlat").getContext("2d"), {
+    type:"bar",
+    data:{ labels: rows.map(r=>r.name), datasets:[{
+      data: rows.map(r=>r.pct),
+      backgroundColor:"rgba(139,92,246,.75)",
+      hoverBackgroundColor:"rgba(167,139,250,.95)",
+      borderRadius:8, borderSkipped:false, maxBarThickness:28
+    }]},
+    options: chartOpts((ctx) => " "+rows[ctx.dataIndex].meta+" · "+rows[ctx.dataIndex].pct+"%")
+  });
+}
+function platClass(p){
+  if(!p.total) return "";
+  if(p.filled === p.total) return "ok";
+  if(p.filled === 0) return "bad";
+  return "mid";
+}
+function renderCards(list){
+  const root = document.getElementById("teams");
+  if(!list.length){
+    root.innerHTML = '<div class="card empty">Нет данных по фильтру</div>';
+    return;
+  }
+  root.innerHTML = list.map((t) => {
+    const plats = t.platforms.map(p => '<span class="plat '+platClass(p)+'">'+esc(p.name)+' '+p.filled+'/'+p.total+'</span>').join("");
+    const miss = t.missing.length ? (
+      '<details class="miss"><summary>Незаполненные пункты · '+t.missing.length+'</summary><ul>'+
+      t.missing.map(m => '<li><span>'+esc(m.platform)+(m.section?' · '+esc(m.section):'')+'</span>'+esc(m.task)+'</li>').join("")+
+      '</ul></details>'
+    ) : '<div class="miss" style="border:0;padding:10px 0 0"><span class="pill ok">Всё заполнено</span></div>';
+    return '<div class="card tcard">'+
+      '<div class="name">'+esc(t.name)+'</div>'+
+      '<div class="stat">'+t.filled+' / '+t.total+' пунктов</div>'+
+      '<div class="pct num">'+t.pct+'%</div>'+
+      '<div class="bar"><i data-w="'+t.pct+'"></i></div>'+
+      '<div class="plats">'+plats+'</div>'+
+      miss+
+      '</div>';
+  }).join("");
+  requestAnimationFrame(()=>{
+    root.querySelectorAll(".bar>i").forEach(el => { el.style.width = el.dataset.w + "%"; });
+  });
+}
+function render(){
+  const list = visibleTeams();
+  const filled = list.reduce((a,t)=>a+t.filled,0);
+  const total = list.reduce((a,t)=>a+t.total,0);
+  const pct = total?Math.round(100*filled/total):0;
+  const miss = total-filled;
+  document.getElementById("kFilled").textContent = String(filled);
+  document.getElementById("kTotal").textContent = String(total);
+  document.getElementById("kPct").textContent = pct+"%";
+  document.getElementById("kMiss").textContent = String(miss);
+  document.getElementById("hFilled").textContent = list.length+" из "+DATA.teams.length+" команд";
+  document.getElementById("hTotal").textContent = "по выбранным командам";
+  document.getElementById("hMiss").textContent = "пунктов со статусом ❌";
+  document.getElementById("sub").textContent = (DATA.meta.live?"Живые данные":"Снимок")+" · "+DATA.meta.asOf;
+  document.getElementById("callout").innerHTML = DATA.meta.live
+    ? "<b>Живые данные</b> из «Чек-Лист». Обновляются при открытии и по кнопке «Обновить». Заполнено — любой статус, кроме ❌. Снимок на "+esc(DATA.meta.asOf)+"."
+    : "<b>Снимок</b> от "+esc(DATA.meta.asOf)+". Живую таблицу сейчас не удалось подтянуть — показаны сохранённые цифры. Нажмите «Обновить», чтобы попробовать снова.";
+  document.getElementById("periodNote").textContent = team ? ("Команда: "+team) : "Все 9 команд · модель/оператор";
+  document.getElementById("foot").textContent = (DATA.meta.live?"Живые данные":"Снимок")+" из «Чек-Лист» · "+DATA.meta.asOf+" · заполнено всё, кроме статуса ❌";
+  renderBars(list);
+  renderPlat(list);
+  renderCards(list);
+}
+async function boot(){
+  try {
+    DATA = await loadLive();
+  } catch (e) {
+    DATA = JSON.parse(JSON.stringify(SNAPSHOT));
+    DATA.meta.live = false;
+    if(!DATA.meta.asOf) DATA.meta.asOf = nowMSK();
+  }
+  fillTeams();
+  render();
+}
+
+document.getElementById("chips").addEventListener("click", e=>{
+  const btn = e.target.closest(".chip"); if(!btn) return;
+  filterMode = btn.dataset.f;
+  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on", c===btn));
+  render();
+});
+document.getElementById("fTeam").addEventListener("change", e=>{ team = e.target.value; render(); });
+document.getElementById("reset").addEventListener("click", ()=>{
+  filterMode="all"; team="";
+  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on", c.dataset.f==="all"));
+  fillTeams(); render();
+});
+document.getElementById("refresh").addEventListener("click", ()=> boot());
+
+boot();
+</script>
+</body>
+</html>
